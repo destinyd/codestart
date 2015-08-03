@@ -67,6 +67,22 @@ class Generator
     puts "      #{'change'.shell_green}  #{path}"
   end
 
+  def change_gemfile_source
+    puts "  修改 Gemfile source 为 ruby.taobao.org"
+    path = File.join @project_name, 'Gemfile'
+
+    lines = File.read(path).lines
+    lines[0] = "source 'http://ruby.taobao.org/'\n"
+
+    File.open(path, 'w') do |f|
+      lines.each do |line|
+        f.write line
+      end
+    end
+
+    puts "      #{'change'.shell_green}  #{path}"
+  end
+
   def add_rails_engine_file
     puts "  创建 rails engine 文件"
     path = File.join @project_name, 'lib', @project_name, 'rails.rb'
@@ -95,6 +111,10 @@ class Generator
     puts "      #{'change'.shell_green}  #{path}"
   end
 
+  def run_bundle
+    system "cd #{@project_name}; bundle"
+  end
+
   def generate
     return if not project_name_valid?
     return if is_dir_exist?
@@ -107,11 +127,17 @@ class Generator
     # 给 gemspec 添加依赖
     add_dependency
 
+    # 修改 gem 的 Gemfile 更改 source
+    change_gemfile_source
+
     # 创建 rails engine 文件
     add_rails_engine_file
 
     # 添加 module 引用
     add_module_require
+
+    # bundle
+    # run_bundle
   end
 
 end
