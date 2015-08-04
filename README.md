@@ -18,12 +18,8 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+这个 gem 目前用来生成 rails engine 的初始化代码，方便开始开发
 
-## Contributing
-
-1. Fork it ( https://github.com/[my-github-username]/codestart/fork )
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create a new Pull Request
+```shell
+bundle exec codestart <project_name>
+```
