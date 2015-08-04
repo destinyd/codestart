@@ -1,6 +1,9 @@
 module Codestart
   class RailsEngineGenerator
     def initialize(project_name)
+      @gem_dir = File.join __dir__, '..'
+      @templates_dir = File.join @gem_dir, 'templates'
+
       puts "rails engine 项目代码构建工具".shell_yellow
       @project_name = project_name
     end
@@ -106,6 +109,21 @@ module Codestart
       end
     end
 
+    def add_controller_files
+      controllers_dir = File.join File.join @project_name, 'controllers', @project_name
+      appliction_controller_path = File.join controllers_dir, 'application_controller.rb'
+      FileUtils.mkdir_p controllers_dir
+      FileUtils.touch appliction_controller_path
+
+      File.open appliction_controller_path, 'w' do |f|
+        template_path = File.join @templates_dir, 'application_controller.rb.erb'
+        content = ERB.new(File.read(template_path)).result binding
+        f.write content
+      end
+
+      puts "      #{'create'.shell_green}  #{appliction_controller_path}"
+    end
+
     def generate
       return if not project_name_valid?
       return if is_dir_exist?
@@ -129,6 +147,9 @@ module Codestart
 
       # bundle
       # run_bundle
+
+      # 创建 controller 文件
+      add_controller_files
     end
 
   end
