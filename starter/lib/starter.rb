@@ -5,4 +5,4 @@ module Starter
 end
 
 # 引用 rails engine
-require 'starter/rails'
+require 'starter/engine'

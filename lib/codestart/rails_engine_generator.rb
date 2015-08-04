@@ -8,6 +8,13 @@ module Codestart
       @project_name = project_name
     end
 
+    def write_erb(template, target)
+      source = File.join @templates_dir, template
+      File.open target, 'w' do |f|
+        f.write ERB.new(File.read(source)).result binding
+      end
+    end
+
     def project_name_valid?
       if @project_name.blank?
         puts "请输入: bundle exec codestart <子模块名>".shell_red
@@ -77,7 +84,7 @@ module Codestart
 
     def add_rails_engine_file
       puts "  创建 rails engine 文件"
-      path = File.join @project_name, 'lib', @project_name, 'rails.rb'
+      path = File.join @project_name, 'lib', @project_name, 'engine.rb'
 
       File.open(path, 'w') do |f|
         f.write "module #{@module_name}\n"
@@ -97,7 +104,7 @@ module Codestart
       File.open(path, 'a') do |f|
         f.write "\n"
         f.write "# 引用 rails engine\n"
-        f.write "require '#{@project_name}/rails'\n"
+        f.write "require '#{@project_name}/engine'\n"
       end
 
       puts "      #{'change'.shell_green}  #{path}"
@@ -109,19 +116,58 @@ module Codestart
       end
     end
 
-    def add_controller_files
-      controllers_dir = File.join File.join @project_name, 'controllers', @project_name
+    def add_controllers_files
+      puts "  创建 controllers"
+
+      controllers_dir = File.join @project_name, 'app/controllers', @project_name
       appliction_controller_path = File.join controllers_dir, 'application_controller.rb'
+      home_controller_path = File.join controllers_dir, 'home_controller.rb'
+
       FileUtils.mkdir_p controllers_dir
       FileUtils.touch appliction_controller_path
 
-      File.open appliction_controller_path, 'w' do |f|
-        template_path = File.join @templates_dir, 'application_controller.rb.erb'
+      write_erb 'application_controller.rb.erb', appliction_controller_path
+
+      write_erb 'home_controller.rb.erb', home_controller_path
+
+      puts "      #{'create'.shell_green}  #{appliction_controller_path}"
+      puts "      #{'create'.shell_green}  #{home_controller_path}"
+    end
+
+    def add_views_files
+      puts "  创建 views"
+
+      layout_dir = File.join @project_name, 'app/views/layouts', @project_name
+      layout_path = File.join layout_dir, 'application.html.haml'
+
+      view_dir = File.join @project_name, 'app/views', @project_name, 'home'
+      view_path = File.join view_dir, 'index.html.haml'
+
+      FileUtils.mkdir_p layout_dir
+      FileUtils.mkdir_p view_dir
+
+      write_erb 'application.html.haml.erb', layout_path
+      write_erb 'index.html.haml.erb', view_path
+
+      puts "      #{'create'.shell_green}  #{layout_path}"
+      puts "      #{'create'.shell_green}  #{view_path}"
+    end
+
+    def add_routes_file
+      puts "  创建 routes"
+
+      config_dir = File.join @project_name, 'config'
+      routes_path = File.join config_dir, 'routes.rb'
+      FileUtils.mkdir_p config_dir
+      FileUtils.touch routes_path
+
+      File.open routes_path, 'w' do |f|
+        template_path = File.join @templates_dir, 'routes.rb.erb'
         content = ERB.new(File.read(template_path)).result binding
         f.write content
       end
 
-      puts "      #{'create'.shell_green}  #{appliction_controller_path}"
+      puts "      #{'create'.shell_green}  #{routes_path}"
     end
 
     def generate
@@ -148,8 +194,14 @@ module Codestart
       # bundle
       # run_bundle
 
-      # 创建 controller 文件
-      add_controller_files
+      # 创建 controllers 文件
+      add_controllers_files
+
+      # 创建 views 文件
+      add_views_files
+
+      # 创建 routes 文件
+      add_routes_file
     end
 
   end
