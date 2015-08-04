@@ -1,5 +1,13 @@
 module Codestart
+  module Output
+    def file_tip(action, path)
+      puts "      #{'action'.shell_green}  #{path}"
+    end
+  end
+
   class RailsEngineGenerator
+    include Output
+
     def initialize(project_name)
       @gem_dir = File.join __dir__, '..'
       @templates_dir = File.join @gem_dir, 'templates'
@@ -63,7 +71,7 @@ module Codestart
         f.write output
       end
 
-      puts "      #{'change'.shell_green}  #{path}"
+      file_tip 'change', path
     end
 
     def change_gemfile_source
@@ -79,7 +87,7 @@ module Codestart
         end
       end
 
-      puts "      #{'change'.shell_green}  #{path}"
+      file_tip 'change', path
     end
 
     def add_rails_engine_file
@@ -94,7 +102,7 @@ module Codestart
         f.write "end\n"
       end
 
-      puts "      #{'create'.shell_green}  #{path}"
+      file_tip 'create', path
     end
 
     def add_module_require
@@ -107,7 +115,7 @@ module Codestart
         f.write "require '#{@project_name}/engine'\n"
       end
 
-      puts "      #{'change'.shell_green}  #{path}"
+      file_tip 'change', path
     end
 
     def run_bundle
@@ -127,11 +135,10 @@ module Codestart
       FileUtils.touch appliction_controller_path
 
       write_erb 'application_controller.rb.erb', appliction_controller_path
-
       write_erb 'home_controller.rb.erb', home_controller_path
 
-      puts "      #{'create'.shell_green}  #{appliction_controller_path}"
-      puts "      #{'create'.shell_green}  #{home_controller_path}"
+      file_tip 'create', appliction_controller_path
+      file_tip 'create', home_controller_path
     end
 
     def add_views_files
@@ -149,8 +156,28 @@ module Codestart
       write_erb 'application.html.haml.erb', layout_path
       write_erb 'index.html.haml.erb', view_path
 
-      puts "      #{'create'.shell_green}  #{layout_path}"
-      puts "      #{'create'.shell_green}  #{view_path}"
+      file_tip 'create', layout_path
+      file_tip 'create', view_path
+    end
+
+    def add_assets_files
+      puts "  创建 assets"
+
+      js_dir = File.join @project_name, 'app/assets/javascripts', @project_name
+      js_path = File.join js_dir, 'application.js'
+      css_dir = File.join @project_name, 'app/assets/stylesheets', @project_name
+      css_path = File.join css_dir, 'application.css'
+      ui_scss_path = File.join css_dir, 'ui.scss'
+
+      FileUtils.mkdir_p js_dir
+      FileUtils.mkdir_p css_dir
+
+      write_erb 'application.js.erb', js_path
+      write_erb 'application.css.erb', css_path
+      write_erb 'ui.scss.erb', ui_scss_path
+
+      file_tip 'create', js_path
+      file_tip 'create', css_path
     end
 
     def add_routes_file
@@ -167,7 +194,7 @@ module Codestart
         f.write content
       end
 
-      puts "      #{'create'.shell_green}  #{routes_path}"
+      file_tip 'create', routes_path
     end
 
     def generate
@@ -199,6 +226,9 @@ module Codestart
 
       # 创建 views 文件
       add_views_files
+
+      # 创建 assets 文件
+      add_assets_files
 
       # 创建 routes 文件
       add_routes_file
