@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
 
 require 'codestart'
-Codestart::RailsEngineGenerator.new(ARGV[0]).generate
+Codestart::RailsEngineGenerator.new(ARGV).generate

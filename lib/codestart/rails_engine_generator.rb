@@ -1,31 +1,80 @@
 module Codestart
   module Output
     def file_tip(action, path)
-      puts "      #{'action'.shell_green}  #{path}"
+      puts "      #{action.shell_green}  #{path}"
     end
+  end
+
+  module FileIO
+    def write_lines(path, lines)
+      File.open path, 'w' do |f|
+        lines.each do |line|
+          f.write line
+        end
+      end
+    end
+
+    def create_from_lines(path, lines)
+      write_lines path, lines
+      file_tip 'create', path
+    end
+
+    def insert_lines(lines, position, new_lines)
+      part0 = lines[0...position]
+      part1 = lines[position..-1]
+      return part0 + new_lines + part1
+    end
+
+    def find_position(lines, query)
+      position = 0
+      lines.each do |line|
+        break if line.index(query) == 0
+        position += 1
+      end
+      return position
+    end
+
+    def create_from_erb(template, target_path)
+      write_erb template, target_path
+      file_tip 'create', target_path
+    end
+
+    def create_dir_and_file_from_erb(target_dir, template)
+      FileUtils.mkdir_p target_dir
+      path = File.join target_dir, template.sub(/\.erb$/, '')
+      create_from_erb template, path
+    end
+
+    private
+
+      def write_erb(template, target_path)
+        source = File.join @templates_dir, template
+        File.open target_path, 'w' do |f|
+          f.write ERB.new(File.read(source)).result binding
+        end
+      end
   end
 
   class RailsEngineGenerator
     include Output
+    include FileIO
 
-    def initialize(project_name)
+    def initialize(args)
       @gem_dir = File.join __dir__, '..'
       @templates_dir = File.join @gem_dir, 'templates'
 
       puts "rails engine 项目代码构建工具".shell_yellow
-      @project_name = project_name
-    end
+      @project_name = args[0]
 
-    def write_erb(template, target)
-      source = File.join @templates_dir, template
-      File.open target, 'w' do |f|
-        f.write ERB.new(File.read(source)).result binding
+      # 删除目标目录
+      if args[1] == '-rm'
+        system "rm -rf #{@project_name}"
       end
     end
 
     def project_name_valid?
       if @project_name.blank?
-        puts "请输入: bundle exec codestart <子模块名>".shell_red
+        puts "请输入: bundle exec codestart <engine_name>".shell_red
         return false
       end
       return true
@@ -50,28 +99,18 @@ module Codestart
       path = "#{@project_name}/#{@project_name}.gemspec"
 
       lines = File.read(path).lines
-      end_line = 0
-      lines.each do |line|
-        break if line.index("end") == 0
-        end_line += 1
-      end
-      part0 = lines[0...end_line]
-      part1 = lines[(end_line)..-1]
-
-      output = (part0 + [
+      end_line_pos = find_position lines, 'end'
+      output = insert_lines lines, end_line_pos, [
           "\n",
           "  # 以下为 rails engine 依赖\n",
           "  spec.add_development_dependency 'actionpack', '~> 4.2.0'\n", 
           "  spec.add_development_dependency 'activesupport', '~> 4.2.0'\n\n",
           "  spec.add_development_dependency 'jquery-rails', '>= 3.1.0'\n",
           "  spec.add_development_dependency 'uglifier'\n"
-        ] + part1).join
+        ]
 
-      File.open(path, 'w') do |f|
-        f.write output
-      end
-
-      file_tip 'change', path
+      write_lines path, output
+      file_tip 'modify', path
     end
 
     def change_gemfile_source
@@ -81,41 +120,32 @@ module Codestart
       lines = File.read(path).lines
       lines[0] = "source 'http://ruby.taobao.org/'\n"
 
-      File.open(path, 'w') do |f|
-        lines.each do |line|
-          f.write line
-        end
-      end
-
-      file_tip 'change', path
+      write_lines path, lines
+      file_tip 'modify', path
     end
 
     def add_rails_engine_file
       puts "  创建 rails engine 文件"
       path = File.join @project_name, 'lib', @project_name, 'engine.rb'
 
-      File.open(path, 'w') do |f|
-        f.write "module #{@module_name}\n"
-        f.write "  class Engine < ::Rails::Engine\n"
-        f.write "    isolate_namespace #{@module_name}\n"
-        f.write "  end\n"
-        f.write "end\n"
-      end
-
-      file_tip 'create', path
+      create_from_lines path, [
+          "module #{@module_name}\n",
+          "  class Engine < ::Rails::Engine\n",
+          "    isolate_namespace #{@module_name}\n",
+          "  end\n",
+          "end\n",
+        ]
     end
 
     def add_module_require
       puts "  添加 module 引用"
       path = File.join @project_name, 'lib', "#{@project_name}.rb"
       
-      File.open(path, 'a') do |f|
-        f.write "\n"
-        f.write "# 引用 rails engine\n"
-        f.write "require '#{@project_name}/engine'\n"
-      end
-
-      file_tip 'change', path
+      create_from_lines path, [
+          "\n",
+          "# 引用 rails engine\n",
+          "require '#{@project_name}/engine'\n",
+        ]
     end
 
     def run_bundle
@@ -128,17 +158,10 @@ module Codestart
       puts "  创建 controllers"
 
       controllers_dir = File.join @project_name, 'app/controllers', @project_name
-      appliction_controller_path = File.join controllers_dir, 'application_controller.rb'
-      home_controller_path = File.join controllers_dir, 'home_controller.rb'
-
-      FileUtils.mkdir_p controllers_dir
-      FileUtils.touch appliction_controller_path
-
-      write_erb 'application_controller.rb.erb', appliction_controller_path
-      write_erb 'home_controller.rb.erb', home_controller_path
-
-      file_tip 'create', appliction_controller_path
-      file_tip 'create', home_controller_path
+      create_dir_and_file_from_erb controllers_dir, 
+        'application_controller.rb.erb'
+      create_dir_and_file_from_erb controllers_dir,
+        'home_controller.rb.erb'
     end
 
     def add_views_files
@@ -153,11 +176,8 @@ module Codestart
       FileUtils.mkdir_p layout_dir
       FileUtils.mkdir_p view_dir
 
-      write_erb 'application.html.haml.erb', layout_path
-      write_erb 'index.html.haml.erb', view_path
-
-      file_tip 'create', layout_path
-      file_tip 'create', view_path
+      create_from_erb 'application.html.haml.erb', layout_path
+      create_from_erb 'index.html.haml.erb', view_path
     end
 
     def add_assets_files
@@ -172,12 +192,9 @@ module Codestart
       FileUtils.mkdir_p js_dir
       FileUtils.mkdir_p css_dir
 
-      write_erb 'application.js.erb', js_path
-      write_erb 'application.css.erb', css_path
-      write_erb 'ui.scss.erb', ui_scss_path
-
-      file_tip 'create', js_path
-      file_tip 'create', css_path
+      create_from_erb 'application.js.erb', js_path
+      create_from_erb 'application.css.erb', css_path
+      create_from_erb 'ui.scss.erb', ui_scss_path
     end
 
     def add_routes_file
@@ -188,13 +205,7 @@ module Codestart
       FileUtils.mkdir_p config_dir
       FileUtils.touch routes_path
 
-      File.open routes_path, 'w' do |f|
-        template_path = File.join @templates_dir, 'routes.rb.erb'
-        content = ERB.new(File.read(template_path)).result binding
-        f.write content
-      end
-
-      file_tip 'create', routes_path
+      create_from_erb 'routes.rb.erb', routes_path
     end
 
     def generate
