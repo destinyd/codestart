@@ -274,6 +274,11 @@ module Codestart
 
       # 复制 sample 文件夹
       copy_sample
+
+      FileUtils.cd @project_name do
+        system 'rm -rf .git'
+        system 'git init'
+      end
     end
 
   end
