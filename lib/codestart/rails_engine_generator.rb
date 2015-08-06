@@ -74,7 +74,7 @@ module Codestart
 
     def project_name_valid?
       if @project_name.blank?
-        puts "请输入: bundle exec codestart <engine_name>".shell_red
+        puts "请输入: codestart <engine_name>".shell_red
         return false
       end
       return true

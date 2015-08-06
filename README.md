@@ -8,6 +8,15 @@ http://s.4ye.me/DE1J85
 
 ## 使用方法
 
+下载 & 安装
+
 ```shell
-bundle exec codestart <project_name>
+wget https://github.com/mindpin/codestart/raw/0.0.1/codestart-0.0.1.gem
+gem install codestart-0.0.1.gem
+```
+
+创建代码
+
+```shell
+codestart <project_name>
 ```
