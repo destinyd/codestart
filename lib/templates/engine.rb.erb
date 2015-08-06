@@ -1,0 +1,8 @@
+module <%= @module_name %>
+  class Engine < ::Rails::Engine
+    isolate_namespace <%= @module_name %>
+    config.to_prepare do
+      ApplicationController.helper ::ApplicationHelper
+    end
+  end
+end

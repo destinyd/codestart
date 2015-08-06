@@ -1,5 +1,9 @@
 module <%= @module_name %>
   class ApplicationController < ActionController::Base
     layout "<%= @project_name %>/application"
+
+    if defined? PlayAuth
+      helper PlayAuth::SessionsHelper
+    end
   end
 end

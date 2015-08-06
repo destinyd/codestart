@@ -135,13 +135,7 @@ module Codestart
       puts "  创建 rails engine 文件"
       path = File.join @project_name, 'lib', @project_name, 'engine.rb'
 
-      create_from_lines path, [
-          "module #{@module_name}\n",
-          "  class Engine < ::Rails::Engine\n",
-          "    isolate_namespace #{@module_name}\n",
-          "  end\n",
-          "end\n",
-        ]
+      create_from_erb 'engine.rb.erb', path
     end
 
     def add_module_require
@@ -232,8 +226,15 @@ module Codestart
       # 修改 routes.rb
       routes_path = File.join target_sample_dir, 'config/routes.rb'
       lines = File.read(routes_path).lines
-      lines[1] = "mount #{@module_name}::Engine => '/', :as => '#{@project_name}'"
+      lines[1] = "  mount #{@module_name}::Engine => '/', :as => '#{@project_name}'\n"
       write_lines routes_path, lines
+
+      # 修改 mongoid.yml
+      mongoid_yml_path = File.join target_sample_dir, 'config/mongoid.yml'
+      result = ERB.new(File.read(mongoid_yml_path)).result binding
+      File.open mongoid_yml_path, 'w' do |f|
+        f.write result
+      end
     end
 
     def generate
