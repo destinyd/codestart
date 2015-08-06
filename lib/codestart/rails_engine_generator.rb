@@ -99,6 +99,13 @@ module Codestart
       path = "#{@project_name}/#{@project_name}.gemspec"
 
       lines = File.read(path).lines
+      # 去掉 TODO
+      pos0 = find_position lines, '  spec.summary'
+      pos1 = find_position lines, '  spec.description'
+      lines[pos0] = '  spec.summary       = ""' + "\n"
+      lines[pos1] = '  spec.description   = ""' + "\n"
+
+      # 添加依赖
       end_line_pos = find_position lines, 'end'
       output = insert_lines lines, end_line_pos, [
           "\n",
@@ -208,6 +215,27 @@ module Codestart
       create_from_erb 'routes.rb.erb', routes_path
     end
 
+    def copy_sample
+      source_sample_dir = File.join @gem_dir, 'sample/'
+      target_sample_dir = File.join @project_name, 'sample/'
+
+      FileUtils.cp_r source_sample_dir, target_sample_dir
+      file_tip 'create', target_sample_dir
+
+      # 修改 Gemfile
+      gemfile_path = File.join target_sample_dir, 'Gemfile'
+      File.open gemfile_path, 'a' do |f|
+        f.write "\n"
+        f.write "gem '#{@project_name}', path: '../'"
+      end
+
+      # 修改 routes.rb
+      routes_path = File.join target_sample_dir, 'config/routes.rb'
+      lines = File.read(routes_path).lines
+      lines[1] = "mount #{@module_name}::Engine => '/', :as => '#{@project_name}'"
+      write_lines routes_path, lines
+    end
+
     def generate
       return if not project_name_valid?
       return if is_dir_exist?
@@ -243,6 +271,9 @@ module Codestart
 
       # 创建 routes 文件
       add_routes_file
+
+      # 复制 sample 文件夹
+      copy_sample
     end
 
   end
