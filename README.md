@@ -20,3 +20,9 @@ gem install codestart-0.0.3.gem
 ```shell
 codestart <project_name>
 ```
+
+## 相关组件
+
+**play_auth**  
+https://github.com/mindpin/play_auth  
+用来提供最基础的登录验证支持和简单的注册登录界面
