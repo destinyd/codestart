@@ -7,8 +7,9 @@
 
 .engine-generated
   - if user_signed_in?
-    .desc
-      %span 当前用户：#{current_user.name}
+    .desc.current-user
+      %span 当前用户：
+      %strong= current_user.name
   - else
     .desc
       %span 当前无登录用户

@@ -143,9 +143,8 @@ module Codestart
       path = File.join @project_name, 'lib', "#{@project_name}.rb"
       
       create_from_lines path, [
-          "\n",
           "# 引用 rails engine\n",
-          "require '#{@project_name}/engine'\n",
+          "require '#{@project_name}/engine'\n"
         ]
     end
 
@@ -207,6 +206,12 @@ module Codestart
       FileUtils.touch routes_path
 
       create_from_erb 'routes.rb.erb', routes_path
+    end
+
+    def add_keep_dirs
+      models_dir = File.join @project_name, 'app/models'
+      FileUtils.mkdir_p models_dir
+      FileUtils.touch File.join models_dir, '.keep'
     end
 
     def copy_sample
@@ -272,6 +277,9 @@ module Codestart
 
       # 创建 routes 文件
       add_routes_file
+
+      # 添加一些 .keep 文件
+      add_keep_dirs
 
       # 复制 sample 文件夹
       copy_sample

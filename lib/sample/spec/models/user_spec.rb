@@ -6,5 +6,4 @@ RSpec.describe User, type: :model do
       expect(create(:user).name).to eq("tom")
     }
   end
-
 end
