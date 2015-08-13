@@ -74,7 +74,12 @@ module Codestart
 
     def project_name_valid?
       if @project_name.blank?
-        puts "请输入: codestart <engine_name>".shell_red
+        puts '请输入: codestart <engine_name>'.shell_red
+        return false
+      end
+      if @project_name.include? '-'
+        advice = @project_name.gsub('-', '_')
+        puts "名称不能包含 - , 建议使用 #{advice}".shell_red
         return false
       end
       return true
