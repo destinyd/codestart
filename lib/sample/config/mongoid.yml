@@ -1,12 +1,12 @@
 development:
   sessions:
     default:
-      database: <%= @project_name %>_dev
+      database: <%= @dash_project_name %>_dev
       hosts:
         - localhost:27017
 test:
   sessions:
     default:
-      database: <%= @project_name %>_test
+      database: <%= @dash_project_name %>_test
       hosts:
         - localhost:27017

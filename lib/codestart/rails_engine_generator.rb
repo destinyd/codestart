@@ -60,16 +60,14 @@ module Codestart
     include FileIO
 
     def initialize(args)
+      @args = args
+
       @gem_dir = File.join __dir__, '..'
       @templates_dir = File.join @gem_dir, 'templates'
 
       puts "rails engine 项目代码构建工具".shell_yellow
       @project_name = args[0]
-
-      # 删除目标目录
-      if args[1] == '-rm'
-        system "rm -rf #{@project_name}"
-      end
+      @dash_project_name = @project_name
     end
 
     def project_name_valid?
@@ -78,15 +76,20 @@ module Codestart
         return false
       end
       if @project_name.include? '-'
-        advice = @project_name.gsub('-', '_')
-        puts "名称不能包含 - , 建议使用 #{advice}".shell_red
-        return false
+        @project_name = @project_name.gsub('-', '_')
+        puts "由于名称包含 - , 已在必要的地方替换为 #{@project_name}".shell_red
       end
       return true
     end
 
     def is_dir_exist?
-      path = @project_name
+      path = @dash_project_name
+
+      # 删除目标目录
+      if @args[1] == '-rm'
+        system "rm -rf #{path}"
+      end
+
       if File.exist? path
         puts "文件目录 #{path} 已存在".shell_red
         return true
@@ -230,7 +233,7 @@ module Codestart
       gemfile_path = File.join target_sample_dir, 'Gemfile'
       File.open gemfile_path, 'a' do |f|
         f.write "\n"
-        f.write "gem '#{@project_name}', path: '../'"
+        f.write "gem '#{@dash_project_name}', path: '../'"
       end
 
       # 修改 routes.rb
@@ -245,6 +248,39 @@ module Codestart
       File.open mongoid_yml_path, 'w' do |f|
         f.write result
       end
+    end
+
+    def modify_for_dash_name
+      return if !@dash_project_name.include? '-'
+
+      puts "进行必要的补充调整"
+
+      # 修改工程名
+      system "mv #{@project_name} #{@dash_project_name}"
+      file_tip 'chname', "#{@project_name} -> #{@dash_project_name}"
+
+      # 修改 gemspec 名称和内容
+      p1 = "#{@dash_project_name}/#{@project_name}.gemspec"
+      p2 = "#{@dash_project_name}/#{@dash_project_name}.gemspec"
+      system "mv #{p1} #{p2}"
+      file_tip 'chname', "#{p1} -> #{p2}"
+      lines = File.read(p2).lines
+      lines[6] = "  spec.name          = '#{@dash_project_name}'\n"
+      write_lines p2, lines
+      file_tip 'modify', p2
+
+      # 修改 lib/ 下的 rb
+      p1 = "#{@dash_project_name}/lib/#{@project_name}.rb"
+      p2 = "#{@dash_project_name}/lib/#{@dash_project_name}.rb"
+      system "mv #{p1} #{p2}"
+      file_tip 'chname', "#{p1} -> #{p2}"
+
+      # 修改 Gemfile
+      path = "#{@dash_project_name}/Gemfile"
+      lines = File.read(path).lines
+      lines[2] = "# Specify your gem's dependencies in #{@dash_project_name}.gemspec\n"
+      write_lines path, lines
+      file_tip 'modify', path
     end
 
     def generate
@@ -289,7 +325,10 @@ module Codestart
       # 复制 sample 文件夹
       copy_sample
 
-      FileUtils.cd @project_name do
+      # 当文件名里有 -, 进行必要的调整
+      modify_for_dash_name
+
+      FileUtils.cd @dash_project_name do
         system 'rm -rf .git'
         system 'git init'
       end
