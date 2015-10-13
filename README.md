@@ -11,8 +11,8 @@ http://s.4ye.me/DE1J85
 下载 & 安装
 
 ```shell
-wget https://github.com/mindpin/codestart/raw/0.2.0/codestart-0.2.0.gem
-gem install codestart-0.2.0.gem
+wget https://github.com/mindpin/codestart/raw/0.2.2/codestart-0.2.2.gem
+gem install codestart-0.2.2.gem
 ```
 
 创建代码
