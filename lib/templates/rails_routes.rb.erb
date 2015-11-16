@@ -1,0 +1,12 @@
+module <%= @module_name %>
+  class Routing
+    # <%= @module_name %>::Routing.mount "/<%= @project_name %>", :as => '<%= @project_name %>'
+    def self.mount(prefix, options)
+      <%= @module_name %>.set_mount_prefix prefix
+
+      Rails.application.routes.draw do
+        mount <%= @module_name %>::Engine => prefix, :as => options[:as]
+      end
+    end
+  end
+end

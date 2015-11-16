@@ -118,7 +118,7 @@ module Codestart
       output = insert_lines lines, end_line_pos, [
           "\n",
           "  # 以下为 rails engine 依赖\n",
-          "  spec.add_development_dependency 'actionpack', '~> 4.2.0'\n", 
+          "  spec.add_development_dependency 'actionpack', '~> 4.2.0'\n",
           "  spec.add_development_dependency 'activesupport', '~> 4.2.0'\n\n",
           "  spec.add_development_dependency 'jquery-rails', '>= 3.1.0'\n",
           "  spec.add_development_dependency 'uglifier'\n"
@@ -139,6 +139,38 @@ module Codestart
       file_tip 'modify', path
     end
 
+    def change_lib_module_file
+      puts "  创建 #{@module_name} module"
+      path = File.join @project_name, 'lib', "#{@project_name}.rb"
+
+      lines = [
+        "module #{@module_name}\n",
+        "  class << self\n",
+        "    def #{@project_name}_config\n",
+        "      self.instance_variable_get(:@#{@project_name}_config) || {}\n",
+        "    end\n",
+        "\n",
+        "    def set_mount_prefix(mount_prefix)\n",
+        "      config = #{@module_name}.#{@project_name}_config\n",
+        "      config[:mount_prefix] = mount_prefix\n",
+        "      #{@module_name}.instance_variable_set(:@#{@project_name}_config, config)\n",
+        "    end\n",
+        "\n",
+        "    def get_mount_prefix\n",
+        "      #{@project_name}_config[:mount_prefix]\n",
+        "    end\n",
+        "  end\n",
+        "end\n",
+        "\n",
+        "# 引用 rails engine\n",
+        "require '#{@project_name}/engine'\n",
+        "require '#{@project_name}/rails_routes'\n"
+      ]
+
+      write_lines path, lines
+      file_tip 'modify', path
+    end
+
     def add_rails_engine_file
       puts "  创建 rails engine 文件"
       path = File.join @project_name, 'lib', @project_name, 'engine.rb'
@@ -146,14 +178,11 @@ module Codestart
       create_from_erb 'engine.rb.erb', path
     end
 
-    def add_module_require
-      puts "  添加 module 引用"
-      path = File.join @project_name, 'lib', "#{@project_name}.rb"
-      
-      create_from_lines path, [
-          "# 引用 rails engine\n",
-          "require '#{@project_name}/engine'\n"
-        ]
+    def add_rails_routes_rb_file
+      puts "  创建 rails_routes.rb 文件"
+      path = File.join @project_name, 'lib', @project_name, 'rails_routes.rb'
+
+      create_from_erb 'rails_routes.rb.erb', path
     end
 
     def run_bundle
@@ -166,7 +195,7 @@ module Codestart
       puts "  创建 controllers"
 
       controllers_dir = File.join @project_name, 'app/controllers', @project_name
-      create_dir_and_file_from_erb controllers_dir, 
+      create_dir_and_file_from_erb controllers_dir,
         'application_controller.rb.erb'
       create_dir_and_file_from_erb controllers_dir,
         'home_controller.rb.erb'
@@ -239,7 +268,7 @@ module Codestart
       # 修改 routes.rb
       routes_path = File.join target_sample_dir, 'config/routes.rb'
       lines = File.read(routes_path).lines
-      lines[1] = "  mount #{@module_name}::Engine => '/', :as => '#{@project_name}'\n"
+      lines[1] = "  #{@module_name}::Routing.mount '/', :as => '#{@project_name}'\n"
       write_lines routes_path, lines
 
       # 修改 mongoid.yml
@@ -301,8 +330,11 @@ module Codestart
       # 创建 rails engine 文件
       add_rails_engine_file
 
-      # 添加 module 引用
-      add_module_require
+      # 创建 rails_routes.rb 文件
+      add_rails_routes_rb_file
+
+      # 修改 lib/xxx.rb 文件，增加 module
+      change_lib_module_file
 
       # bundle
       # run_bundle
