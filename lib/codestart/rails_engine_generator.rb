@@ -41,7 +41,8 @@ module Codestart
 
     def create_dir_and_file_from_erb(target_dir, template)
       FileUtils.mkdir_p target_dir
-      path = File.join target_dir, template.sub(/\.erb$/, '')
+      name = template.split('/').last
+      path = File.join target_dir, name.sub(/\.erb$/, '')
       create_from_erb template, path
     end
 
@@ -197,58 +198,38 @@ module Codestart
       controllers_dir = File.join @project_name, 'app/controllers', @project_name
       create_dir_and_file_from_erb controllers_dir,
         'application_controller.rb.erb'
-      create_dir_and_file_from_erb controllers_dir,
-        'home_controller.rb.erb'
     end
 
-    def add_views_files
-      puts "  创建 views"
+    def add_sample_views_files
+      puts "  创建 sample views"
 
-      layout_dir = File.join @project_name, 'app/views/layouts', @project_name
-      layout_path = File.join layout_dir, 'application.html.haml'
+      sample_layout_dir = File.join @project_name, 'sample/app/views/layouts'
 
-      view_dir = File.join @project_name, 'app/views', @project_name, 'home'
-      view_path = File.join view_dir, 'index.html.haml'
+      sample_view_dir = File.join @project_name, 'sample/app/views', 'home'
 
-      FileUtils.mkdir_p layout_dir
-      FileUtils.mkdir_p view_dir
-
-      create_from_erb 'application.html.haml.erb', layout_path
-      create_from_erb 'index.html.haml.erb', view_path
-    end
-
-    def add_assets_files
-      puts "  创建 assets"
-
-      js_dir = File.join @project_name, 'app/assets/javascripts', @project_name
-      js_path = File.join js_dir, 'application.js'
-      css_dir = File.join @project_name, 'app/assets/stylesheets', @project_name
-      css_path = File.join css_dir, 'application.css'
-      ui_scss_path = File.join css_dir, 'ui.scss'
-
-      FileUtils.mkdir_p js_dir
-      FileUtils.mkdir_p css_dir
-
-      create_from_erb 'application.js.erb', js_path
-      create_from_erb 'application.css.erb', css_path
-      create_from_erb 'ui.scss.erb', ui_scss_path
+      create_dir_and_file_from_erb sample_layout_dir, 'sample/application.html.haml.erb'
+      create_dir_and_file_from_erb sample_view_dir, 'sample/index.html.haml.erb'
     end
 
     def add_routes_file
       puts "  创建 routes"
 
       config_dir = File.join @project_name, 'config'
-      routes_path = File.join config_dir, 'routes.rb'
-      FileUtils.mkdir_p config_dir
-      FileUtils.touch routes_path
 
-      create_from_erb 'routes.rb.erb', routes_path
+      create_dir_and_file_from_erb config_dir, 'routes.rb.erb'
     end
 
     def add_keep_dirs
-      models_dir = File.join @project_name, 'app/models'
-      FileUtils.mkdir_p models_dir
-      FileUtils.touch File.join models_dir, '.keep'
+      keep_it File.join @project_name, 'app/models', @project_name
+      keep_it File.join @project_name, 'app/views', @project_name
+      keep_it File.join @project_name, 'app/controllers', @project_name
+      keep_it File.join @project_name, 'app/assets/javascripts', @project_name
+      keep_it File.join @project_name, 'app/assets/stylesheets', @project_name
+    end
+
+    def keep_it dir
+      FileUtils.mkdir_p dir
+      FileUtils.touch File.join dir, '.keep'
     end
 
     def copy_sample
@@ -266,6 +247,7 @@ module Codestart
       end
 
       # 修改 routes.rb
+      FileUtils.mkdir_p File.join target_sample_dir, 'config'
       routes_path = File.join target_sample_dir, 'config/routes.rb'
       lines = File.read(routes_path).lines
       lines[1] = "  #{@module_name}::Routing.mount '/', :as => '#{@project_name}'\n"
@@ -342,20 +324,17 @@ module Codestart
       # 创建 controllers 文件
       add_controllers_files
 
-      # 创建 views 文件
-      add_views_files
-
-      # 创建 assets 文件
-      add_assets_files
-
       # 创建 routes 文件
       add_routes_file
 
-      # 添加一些 .keep 文件
-      add_keep_dirs
-
       # 复制 sample 文件夹
       copy_sample
+
+      # 创建 sample views 文件
+      add_sample_views_files
+
+      # 添加一些 .keep 文件
+      add_keep_dirs
 
       # 当文件名里有 -, 进行必要的调整
       modify_for_dash_name
