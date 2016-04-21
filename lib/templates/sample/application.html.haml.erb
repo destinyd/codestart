@@ -4,10 +4,10 @@
     %meta{:'http-equiv' => 'Content-Type', :content => 'text/html; charset=utf-8'}
     %meta{:name => 'viewport', :content => 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'}
 
-    %title rails engine: <%= @project_name %>
+    %title rails engine <%= @project_name %> sample
     = csrf_meta_tags
-    = stylesheet_link_tag '<%= @project_name %>/application', :media => 'screen'
-    = javascript_include_tag '<%= @project_name %>/application'
+    = stylesheet_link_tag 'application', :media => 'screen'
+    = javascript_include_tag 'application'
 
   %body
     = yield
